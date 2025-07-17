@@ -1,32 +1,35 @@
 import whisper
 import torchaudio
-from moviepy.editor import VideoFileClip
-from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+import subprocess
 from transformers import pipeline
 from difflib import SequenceMatcher
-import os
 
-model = whisper.load_model("base")
+model = whisper.load_model("base")  # Load once globally
 
 def extract_audio(video_path):
     audio_path = "temp_audio.wav"
-    if os.path.exists(video_path):
-        video = VideoFileClip(video_path)
-        video.audio.write_audiofile(audio_path)
-        return audio_path
-    else:
-        raise FileNotFoundError(f"Video file '{video_path}' not found!")
+    command = [
+        "ffmpeg", "-y", "-i", video_path,
+        "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path
+    ]
+    subprocess.run(command, check=True)
+    return audio_path
 
 def transcribe_audio(audio_path):
     try:
         waveform, sample_rate = torchaudio.load(audio_path)
+        print("✅ Audio shape:", waveform.shape)
+        print("✅ Sample rate:", sample_rate)
+
         if waveform.numel() == 0:
             raise ValueError("Audio seems empty.")
     except Exception as e:
-        raise RuntimeError("❌ Failed to load audio.") from e
+        raise RuntimeError("❌ Failed to load audio. It might be corrupted or silent.") from e
 
     result = model.transcribe(audio_path, verbose=False)
-    return result["text"], result.get("segments", [])
+    text = result["text"]
+    segments = result.get("segments", [])
+    return text, segments
 
 def summarize_text(text):
     if len(text) > 8000:
@@ -40,11 +43,13 @@ def summarize_text(text):
     return summary
 
 def clip_video(video_path, start_time, end_time, output_path="short_clip.mp4"):
-    if os.path.exists(video_path):
-        ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
-        return output_path
-    else:
-        raise FileNotFoundError(f"Video file '{video_path}' not found!")
+    command = [
+        "ffmpeg", "-y", "-i", video_path,
+        "-ss", str(start_time), "-to", str(end_time),
+        "-c", "copy", output_path
+    ]
+    subprocess.run(command, check=True)
+    return output_path
 
 def match_summary_to_segments(summary, segments):
     def similar(a, b):

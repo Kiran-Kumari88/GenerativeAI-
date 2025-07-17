@@ -9,6 +9,7 @@ st.set_page_config(layout="centered")
 
 st.sidebar.write("✅ Numpy:", np.__version__)
 st.sidebar.write("✅ Torch:", torch.__version__)
+st.sidebar.write("✅ Whisper loaded")
 
 st.title("🎥 Video Summary from Long Lectures")
 
@@ -20,16 +21,13 @@ if video_file:
     st.video("uploaded_video.mp4")
 
     if st.button("🔊 Extract & Transcribe Audio"):
-        if os.path.exists("uploaded_video.mp4"):
-            st.info("Processing audio and transcription...")
-            audio_path = extract_audio("uploaded_video.mp4")
-            transcript, segments = transcribe_audio(audio_path)
-            st.session_state['transcript'] = transcript
-            st.session_state['segments'] = segments
-            st.success("Transcription complete!")
-            st.text_area("📝 Transcript", transcript, height=300)
-        else:
-            st.error("❌ Please upload a video first!")
+        st.info("Processing audio and transcription...")
+        audio_path = extract_audio("uploaded_video.mp4")
+        transcript, segments = transcribe_audio(audio_path)
+        st.session_state['transcript'] = transcript
+        st.session_state['segments'] = segments
+        st.success("Transcription complete!")
+        st.text_area("📝 Transcript", transcript, height=300)
 
     if "transcript" in st.session_state:
         if st.button("🧠 Generate Summary"):
@@ -38,9 +36,10 @@ if video_file:
             st.success("Summary generated!")
             st.text_area("🧾 Summary", summary, height=200)
 
+    if 'transcript' in st.session_state:
         st.download_button("📥 Download Transcript", st.session_state['transcript'], file_name="transcript.txt")
 
-    if "summary" in st.session_state:
+    if 'summary' in st.session_state:
         st.download_button("📥 Download Summary", st.session_state['summary'], file_name="summary.txt")
 
         st.header("🎯 Extract a Short Video Clip")

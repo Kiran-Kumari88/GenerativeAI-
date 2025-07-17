@@ -3,7 +3,4 @@ openai-whisper
 transformers
 torch
 torchaudio
-moviepy
-imageio
-imageio-ffmpeg
 numpy
