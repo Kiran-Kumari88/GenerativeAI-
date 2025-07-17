@@ -4,7 +4,7 @@ import torch
 import os
 import moviepy.video.io.ffmpeg_tools as ffmpeg_tools
 from utils import extract_audio, transcribe_audio, summarize_text, clip_video, match_summary_to_segments
-import moviepy.editor as mp
+
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 st.set_page_config(layout="centered")
@@ -61,15 +61,4 @@ if video_file:
 
     if "summary" in st.session_state and "segments" in st.session_state:
         if st.button("🎞 Generate Final Summary Clip"):
-            matched_segments = match_summary_to_segments(st.session_state["summary"], st.session_state["segments"])
-            if matched_segments:
-                final_clip = None
-                for start, end in matched_segments:
-                    part = mp.VideoFileClip("uploaded_video.mp4").subclip(start, end)
-                    final_clip = part if final_clip is None else mp.concatenate_videoclips([final_clip, part])
-                final_path = "summary_clip.mp4"
-                final_clip.write_videofile(final_path)
-                st.video(final_path)
-                st.success("✅ Final summary clip created!")
-            else:
-                st.warning("⚠️ No matching segments found in summary.")
+            st.warning("⚠️ This feature is currently disabled. Coming soon!")
