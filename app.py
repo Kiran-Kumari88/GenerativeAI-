@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import torch
 import os
-import imageio_ffmpeg
+import moviepy.video.io.ffmpeg_tools as ffmpeg_tools
 from utils import extract_audio, transcribe_audio, summarize_text, clip_video, match_summary_to_segments
 import moviepy.editor as mp
 

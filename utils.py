@@ -1,6 +1,6 @@
 import whisper
 import torchaudio
-import moviepy.editor as mp
+import moviepy.video.io.ffmpeg_tools as ffmpeg_tools
 from transformers import pipeline
 import subprocess
 from difflib import SequenceMatcher
@@ -50,8 +50,8 @@ def summarize_text(text):
     return summary
 
 def clip_video(video_path, start_time, end_time, output_path="short_clip.mp4"):
-    clip = mp.VideoFileClip(video_path).subclip(start_time, end_time)
-    clip.write_videofile(output_path, codec="libx264", audio_codec="aac", verbose=False, logger=None)
+    from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+    ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
     return output_path
 
 def match_summary_to_segments(summary, segments):
