@@ -50,8 +50,7 @@ def summarize_text(text):
     return summary
 
 def clip_video(video_path, start_time, end_time, output_path="short_clip.mp4"):
-    from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-    ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
+    ffmpeg_tools.ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
     return output_path
 
 def match_summary_to_segments(summary, segments):
