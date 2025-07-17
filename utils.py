@@ -1,27 +1,19 @@
 import whisper
 import torchaudio
-import moviepy.video.io.ffmpeg_tools as ffmpeg_tools
+import moviepy.editor as mp
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from transformers import pipeline
-import subprocess
 from difflib import SequenceMatcher
 
 model = whisper.load_model("base")  # Load once globally
 
 def extract_audio(video_path):
     audio_path = "temp_audio.wav"
-    command = [
-        "ffmpeg", "-y", "-i", video_path,
-        "-vn",
-        "-acodec", "pcm_s16le",
-        "-ar", "16000",
-        "-ac", "1",
-        audio_path
-    ]
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    video = mp.VideoFileClip(video_path)
+    video.audio.write_audiofile(audio_path)
     return audio_path
 
 def transcribe_audio(audio_path):
-    # Load audio to check if it's valid
     try:
         waveform, sample_rate = torchaudio.load(audio_path)
         print("✅ Audio shape:", waveform.shape)
@@ -32,10 +24,9 @@ def transcribe_audio(audio_path):
     except Exception as e:
         raise RuntimeError("❌ Failed to load audio. It might be corrupted or silent.") from e
 
-    # Whisper transcription
     result = model.transcribe(audio_path, verbose=False)
     text = result["text"]
-    segments = result.get("segments", [])  # Will be empty in openai-whisper
+    segments = result.get("segments", [])
     return text, segments
 
 def summarize_text(text):
@@ -50,15 +41,10 @@ def summarize_text(text):
     return summary
 
 def clip_video(video_path, start_time, end_time, output_path="short_clip.mp4"):
-    ffmpeg_tools.ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
+    ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
     return output_path
 
 def match_summary_to_segments(summary, segments):
-    """
-    Match summary to segment texts and return combined smart clip range.
-    """
-    from difflib import SequenceMatcher
-
     def similar(a, b):
         return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
@@ -71,12 +57,11 @@ def match_summary_to_segments(summary, segments):
     if not matched_segments:
         return []
 
-    # Merge nearby segments into one continuous clip
     merged_segments = []
     current_start, current_end = matched_segments[0]
 
     for start, end in matched_segments[1:]:
-        if start - current_end <= 2:  # if within 2 seconds, merge
+        if start - current_end <= 2:
             current_end = end
         else:
             merged_segments.append((current_start, current_end))
