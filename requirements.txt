@@ -1,6 +1,9 @@
 streamlit
-openai-whisper
-transformers
 torch
 torchaudio
+openai-whisper
+transformers
+moviepy
+imageio
+imageio-ffmpeg
 numpy
