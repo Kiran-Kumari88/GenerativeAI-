@@ -1,15 +1,22 @@
 import whisper
 import torchaudio
 import subprocess
+import shutil
+import os
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from transformers import pipeline
 from difflib import SequenceMatcher
 
-# Load Whisper once at import time
+# Load Whisper model once at import
 model = whisper.load_model("base")
 
 def extract_audio(video_path):
-    audio_path = "temp_audio.wav"
+    audio_path = os.path.join("/tmp", "temp_audio.wav")
+
+    # Check if ffmpeg exists in environment
+    if shutil.which("ffmpeg") is None:
+        raise RuntimeError("❌ ffmpeg is not available on this environment. Please install via apt.txt for Hugging Face.")
+
     command = [
         "ffmpeg",
         "-i", video_path,
@@ -20,12 +27,14 @@ def extract_audio(video_path):
         audio_path,
         "-y"
     ]
+
     try:
         subprocess.run(command, check=True)
+        if not os.path.exists(audio_path):
+            raise RuntimeError("❌ Audio file was not created by ffmpeg.")
         return audio_path
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error during audio extraction: {e}")
-        raise RuntimeError("Audio extraction failed. Please check ffmpeg & video file.")
+        raise RuntimeError(f"❌ Audio extraction failed: {e}") from e
 
 def transcribe_audio(audio_path):
     try:
@@ -43,8 +52,8 @@ def transcribe_audio(audio_path):
 
 def summarize_text(text):
     if len(text) > 8000:
-        text = text[:8000]  # Preventing long input issues
-    
+        text = text[:8000]  # Truncate long inputs
+
     try:
         summarizer = pipeline("summarization", model="Falconsai/text_summarization")
     except Exception as e:
@@ -58,11 +67,13 @@ def summarize_text(text):
             summary += result[0]['summary_text'].strip() + "\n"
         except Exception as e:
             print(f"⚠️ Error during summarization of chunk: {e}")
-    return summary
+    return summary.strip()
 
-def clip_video(video_path, start_time, end_time, output_path="short_clip.mp4"):
+def clip_video(video_path, start_time, end_time, output_path="/tmp/short_clip.mp4"):
     try:
         ffmpeg_extract_subclip(video_path, start_time, end_time, targetname=output_path)
+        if not os.path.exists(output_path):
+            raise RuntimeError("❌ Clip was not created.")
         return output_path
     except Exception as e:
         raise RuntimeError(f"❌ Failed to clip video: {e}") from e
