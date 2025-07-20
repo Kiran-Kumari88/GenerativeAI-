@@ -3,6 +3,7 @@ import torchaudio
 import subprocess
 import shutil
 import os
+import ffmpeg
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from transformers import pipeline
 from difflib import SequenceMatcher
@@ -17,16 +18,9 @@ def extract_audio(video_path):
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("❌ ffmpeg is not available on this environment. Please install via apt.txt for Hugging Face.")
 
-    command = [
-        "ffmpeg",
-        "-i", video_path,
-        "-vn",
-        "-acodec", "pcm_s16le",
-        "-ar", "16000",
-        "-ac", "1",
-        audio_path,
-        "-y"
-    ]
+    stream = ffmpeg.input(video_path)
+    stream = ffmpeg.output(stream, audio_path, format='mp3')
+    ffmpeg.run(stream)
 
     try:
         subprocess.run(command, check=True)
