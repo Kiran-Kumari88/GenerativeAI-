@@ -7,8 +7,8 @@ from utils import extract_audio, transcribe_audio, summarize_text, clip_video, m
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 st.set_page_config(layout="centered")
 
-st.sidebar.write("✅ Numpy:", np._version_)
-st.sidebar.write("✅ Torch:", torch._version_)
+st.sidebar.write("✅ Numpy:", np.__version__)
+st.sidebar.write("✅ Torch:", torch.__version__)
 st.sidebar.write("✅ Whisper loaded")
 
 st.title("🎥 Video Summary from Long Lectures")
