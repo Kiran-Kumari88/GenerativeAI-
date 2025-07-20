@@ -15,14 +15,29 @@ st.title("🎥 Video Summary from Long Lectures")
 
 video_file = st.file_uploader("Upload a lecture video", type=["mp4", "mov", "avi", "webm"])
 
+import tempfile
+
 if video_file:
-    with open("uploaded_video.mp4", "wb") as f:
+    temp_video_path = os.path.join(tempfile.gettempdir(), "uploaded_video.mp4")
+
+    # Save uploaded video file in temp path
+    with open(temp_video_path, "wb") as f:
         f.write(video_file.read())
-    st.video("uploaded_video.mp4")
+
+    # Confirm file exists before extracting audio
+    if os.path.exists(temp_video_path):
+        st.success("✅ Video saved successfully!")
+        audio_path = extract_audio(temp_video_path)
+        st.success("✅ Audio extracted successfully!")
+    else:
+        st.error("❌ Video file not found after saving.")
+
+    # Display the video from the saved temp path
+    st.video(temp_video_path)
 
     if st.button("🔊 Extract & Transcribe Audio"):
         st.info("Processing audio and transcription...")
-        audio_path = extract_audio("uploaded_video.mp4")
+        audio_path = extract_audio(temp_video_path)
         transcript, segments = transcribe_audio(audio_path)
         st.session_state['transcript'] = transcript
         st.session_state['segments'] = segments
