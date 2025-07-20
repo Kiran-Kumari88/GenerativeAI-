@@ -7,3 +7,4 @@ moviepy
 imageio
 imageio-ffmpeg
 numpy
+ffmpeg-python

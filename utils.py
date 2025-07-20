@@ -3,7 +3,6 @@ import torchaudio
 import subprocess
 import shutil
 import os
-import ffmpeg
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from transformers import pipeline
 from difflib import SequenceMatcher
@@ -17,18 +16,15 @@ def extract_audio(video_path):
     # Check if ffmpeg exists in environment
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("❌ ffmpeg is not available on this environment. Please install via apt.txt for Hugging Face.")
-
+    
+    import ffmpeg
     stream = ffmpeg.input(video_path)
-    stream = ffmpeg.output(stream, audio_path, format='mp3')
-    ffmpeg.run(stream)
+    stream = ffmpeg.output(stream, audio_path, format='wav')
+    ffmpeg.run(stream, overwrite_output=True)
 
-    try:
-        subprocess.run(command, check=True)
-        if not os.path.exists(audio_path):
-            raise RuntimeError("❌ Audio file was not created by ffmpeg.")
-        return audio_path
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"❌ Audio extraction failed: {e}") from e
+    if not os.path.exists(audio_path):
+        raise RuntimeError("❌ Audio file was not created by ffmpeg.")
+    return audio_path
 
 def transcribe_audio(audio_path):
     try:
